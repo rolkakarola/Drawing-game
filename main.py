@@ -11,13 +11,11 @@ if not cap.isOpened():
     exit()
 
 # Initialize variables
-height, width = 480, 640  # Set the resolution manually, or you can get it dynamically
+height, width = 480, 640  # Set the resolution manually
 canvas = np.ones((height, width, 3), dtype="uint8") * 255  # White canvas to draw on
-draw_color = (0, 0, 255)  # Red color for drawing
-brush_thickness = 5
+draw_color = (0, 102, 102)  # Color for drawing (teal)
+brush_thickness = 2
 previous_point = None
-is_drawing = False
-hand_detected = False
 
 # Initialize MediaPipe hands
 mp_hands = mp.solutions.hands
@@ -31,9 +29,29 @@ def adjust_brightness_contrast(image, brightness=0, contrast=0):
     image = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
     return image
 
-# Function to calculate the distance between two points
-def calculate_distance(point1, point2):
-    return np.sqrt((point2[0] - point1[0])**2 + (point2[1] - point1[1])**2)
+# Function to check if only the forefinger is up
+def is_forefinger_up(hand_landmarks):
+    # Get the y-coordinates of the fingertips and their lower joints
+    tips = [
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_TIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_TIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP].y,
+    ]
+    lowers = [
+        hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_PIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP].y,
+        hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_PIP].y,
+    ]
+
+    # Check if the index finger is raised (tip is above PIP)
+    index_raised = tips[0] < lowers[0]
+
+    # Check if other fingers are not raised
+    others_down = all(tips[i] > lowers[i] for i in range(1, 4))
+
+    return index_raised and others_down
 
 # Start capturing frames from the camera
 while True:
@@ -60,35 +78,20 @@ while True:
             # Draw landmarks on the frame
             mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-            # Get the coordinates of the thumb tip and index tip
-            thumb_tip = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
+            # Get the coordinates of the index finger tip
             index_tip = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
-            thumb_tip_pos = (int(thumb_tip.x * width), int(thumb_tip.y * height))
             index_tip_pos = (int(index_tip.x * width), int(index_tip.y * height))
 
-            # Calculate the distance between the thumb and index finger
-            distance = calculate_distance(thumb_tip_pos, index_tip_pos)
-
-            # If the distance is small, the hand is closed, and we start drawing
-            if distance < 50 and not is_drawing:
-                print("Hand is closed, START DRAWING!")
-                is_drawing = True
-                previous_point = None  # Reset previous point when starting drawing
-
-            # If the distance is large, the hand is open, and we stop drawing
-            elif distance > 100 and is_drawing:
-                print("Hand is open, STOP DRAWING.")
-                is_drawing = False
-                previous_point = None  # Reset previous point when stopping drawing
-
-            # If drawing mode is active, draw on canvas
-            if is_drawing:
+            # Check if the forefinger is the only finger raised
+            if is_forefinger_up(hand_landmarks):
                 if previous_point is not None:
-                    cv2.line(canvas, previous_point, thumb_tip_pos, draw_color, brush_thickness)
-                previous_point = thumb_tip_pos
+                    cv2.line(canvas, previous_point, index_tip_pos, draw_color, brush_thickness)
+                previous_point = index_tip_pos
+            else:
+                previous_point = None
 
-            # Draw a circle around the thumb tip
-            cv2.circle(frame, thumb_tip_pos, 10, (0, 255, 0), -1)
+            # Draw a circle around the index tip
+            cv2.circle(frame, index_tip_pos, 10, (0, 255, 0), -1)
 
     else:
         previous_point = None
