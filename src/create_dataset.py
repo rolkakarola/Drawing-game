@@ -18,6 +18,7 @@ data = []
 labels = []
 for dir_ in os.listdir(DATA_DIR):
     for img_path in os.listdir(os.path.join(DATA_DIR, dir_)):
+        """Iterating over each image in directory"""
         data_aux = []
 
         x_ = []
@@ -25,6 +26,8 @@ for dir_ in os.listdir(DATA_DIR):
 
         img = cv2.imread(os.path.join(DATA_DIR, dir_, img_path))
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        """when using mediapipe all the images need to be converted to RGB"""
+
 
         results = hands.process(img_rgb)
         if results.multi_hand_landmarks:
