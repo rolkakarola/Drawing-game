@@ -1,3 +1,4 @@
+"""This module is the main executing script"""
 import pickle
 import cv2
 import mediapipe as mp
@@ -27,18 +28,25 @@ class HandGestureRecognition:
         self.hands = self.mp_hands.Hands(min_detection_confidence=detection_confidence, min_tracking_confidence=0.8)
         self.mp_drawing = mp.solutions.drawing_utils  # hand landmarks and connections
         
-    def load_model(self, model_path):
-        model_dict = pickle.load(open(model_path, 'rb'))
-        return model_dict['model']
 
     def adjust_brightness_contrast(self, image):
         """Adjust the brightness and contrast of the image."""
-        alpha = 1.0  # contrast factor (not used, fixed)
-        beta = -70  # brightness adjustment (fixed for this code)
+        alpha = 1.0  
+        beta = -70  
         return cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
 
+
+    def load_model(self, model_path):
+        "This fucntion is loading the pickle model"
+        model_dict = pickle.load(open(model_path, 'rb'))
+        return model_dict['model']
+
+
     def process_frame(self, frame):
-        """Process the frame for hand detection and drawing."""
+        """Process the frame for hand detection and drawing
+        This function is utlizing the ML model
+
+        """
         frame = cv2.flip(frame, 1)  # Flip the frame horizontally
         frame = self.adjust_brightness_contrast(frame)
 
@@ -72,7 +80,7 @@ class HandGestureRecognition:
                 data_aux = []
                 x_ = []
                 y_ = []
-                H, W, _ = frame.shape
+                
 
                 for i in range(len(hand_landmarks.landmark)):
                     x = hand_landmarks.landmark[i].x
@@ -86,8 +94,9 @@ class HandGestureRecognition:
                     data_aux.append(x - min(x_))
                     data_aux.append(y - min(y_))
 
+                """Predicting the model"""
                 prediction = self.model.predict([np.asarray(data_aux)])
-                predicted_character = self.labels_dict[int(prediction[0])]
+                predicted_character = self.labels_dict[int(prediction[0])] # predication of a list
 
                 # Handle the actions based on the predicted gesture
                 if predicted_character == 'change color':
@@ -125,6 +134,7 @@ class HandGestureRecognition:
         """Start the camera capture and process frames."""
         while True:
             ret, frame = self.cap.read()  # Read a frame from the camera
+
             if not ret:
                 print("CAMERA ISN'T READY!")
                 break
