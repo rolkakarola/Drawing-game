@@ -1,6 +1,6 @@
+"""This module is used for data processing, it converts images into arrays"""
 import os
 import pickle
-
 import mediapipe as mp
 import cv2
 import matplotlib.pyplot as plt
