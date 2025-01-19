@@ -21,19 +21,16 @@ Environment should have the following requirements (also defined in requirments.
    brew install python@3.11
 
 2.Clone the repository to your local machine
-    ```
-      cd path/to/your/directory
+
+      path/to/your/directory
       git clone https://github.com/rolkakarola/Virtual-Painter
-    ```
 
 2. Install the required Python packages:
     ```bash
     pip install -r requirements.txt
 
-
-
 ### Running the script
-
+    python main.py
 #### Steps to execute
 
 ##  Project Structure
@@ -45,7 +42,7 @@ Environment should have the following requirements (also defined in requirments.
     │   ├── collect_imgs.py         
     │   ├── create_dataset.py           
     │   ├── data.pickle     
-    │   ├── main.py  
+    │   ├── main.py                 # main pythin file
     │   ├── train_classifier.py
     │   └── model.p            
     ├── requirements.txt    
